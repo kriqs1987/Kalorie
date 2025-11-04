@@ -5,6 +5,7 @@ import { fileToBase64 } from './utils/fileUtils';
 import type { AnalysisResult, HistoryItem } from './types';
 import Header from './components/Header';
 import ImageUpload from './components/ImageUpload';
+import CameraCapture from './components/CameraCapture';
 import ResultsDisplay from './components/ResultsDisplay';
 import Spinner from './components/Spinner';
 import HistoryDisplay from './components/HistoryDisplay';
@@ -19,6 +20,7 @@ const App: React.FC = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [recipe, setRecipe] = useState<string | null>(null);
   const [isGeneratingRecipe, setIsGeneratingRecipe] = useState<boolean>(false);
+  const [showCamera, setShowCamera] = useState<boolean>(false);
 
 
   useEffect(() => {
@@ -29,6 +31,7 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error("Failed to load history from localStorage", error);
+      // If parsing fails, remove the corrupted item
       localStorage.removeItem('calorieHistory');
     }
   }, []);
@@ -39,6 +42,7 @@ const App: React.FC = () => {
     setAnalysisResult(null);
     setError(null);
     setRecipe(null);
+    setShowCamera(false);
   };
 
   const handleAnalyzeClick = useCallback(async () => {
@@ -66,7 +70,11 @@ const App: React.FC = () => {
 
       setHistory(prevHistory => {
           const updatedHistory = [newHistoryItem, ...prevHistory].slice(0, 5);
-          localStorage.setItem('calorieHistory', JSON.stringify(updatedHistory));
+          try {
+            localStorage.setItem('calorieHistory', JSON.stringify(updatedHistory));
+          } catch (storageError) {
+            console.error("Failed to save history to localStorage", storageError);
+          }
           return updatedHistory;
       });
 
@@ -80,7 +88,7 @@ const App: React.FC = () => {
 
   const handleGenerateRecipeClick = useCallback(async () => {
     if (!imageFile || !analysisResult || analysisResult.items.length === 0) {
-        setError("Nie można wygenerować przepisu bez zidentyfikowanych składników.");
+        setError("Nie można wyszukać przepisu bez zidentyfikowanych składników.");
         return;
     }
 
@@ -94,7 +102,7 @@ const App: React.FC = () => {
         setRecipe(generatedRecipe);
     } catch (err) {
         console.error(err);
-        setError("Wystąpił błąd podczas generowania przepisu. Spróbuj ponownie.");
+        setError("Wystąpił błąd podczas wyszukiwania przepisu. Spróbuj ponownie.");
     } finally {
         setIsGeneratingRecipe(false);
     }
@@ -112,7 +120,15 @@ const App: React.FC = () => {
 
   const clearHistory = () => {
     setHistory([]);
-    localStorage.removeItem('calorieHistory');
+    try {
+      localStorage.removeItem('calorieHistory');
+    } catch (storageError) {
+      console.error("Failed to clear history from localStorage", storageError);
+    }
+  };
+
+  const handleCameraCancel = () => {
+    setShowCamera(false);
   };
 
   return (
@@ -121,15 +137,29 @@ const App: React.FC = () => {
       <main className="container mx-auto p-4 md:p-8">
         <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="p-6 md:p-10">
-            {!imageUrl && (
-                <div>
-                    <h2 className="text-2xl font-bold text-slate-700 mb-4">Prześlij zdjęcie swojego posiłku</h2>
-                    <p className="text-slate-500 mb-6">Nasza sztuczna inteligencja przeanalizuje zdjęcie, oszacuje liczbę kalorii i zaproponuje przepis.</p>
-                    <ImageUpload onImageSelect={handleImageSelect} disabled={isLoading} />
-                </div>
-            )}
-            
-            {imageUrl && (
+            {!imageUrl ? (
+                showCamera ? (
+                    <CameraCapture onImageCapture={handleImageSelect} onCancel={handleCameraCancel} />
+                ) : (
+                    <div>
+                        <h2 className="text-2xl font-bold text-slate-700 mb-4">Prześlij zdjęcie swojego posiłku</h2>
+                        <p className="text-slate-500 mb-6">Nasza sztuczna inteligencja przeanalizuje zdjęcie, oszacuje liczbę kalorii i zaproponuje przepis z Cookido.</p>
+                        <ImageUpload onImageSelect={handleImageSelect} disabled={isLoading} />
+                        <div className="my-6 flex items-center text-slate-400">
+                            <hr className="flex-grow border-t" />
+                            <span className="px-4 font-semibold">LUB</span>
+                            <hr className="flex-grow border-t" />
+                        </div>
+                        <button
+                            onClick={() => setShowCamera(true)}
+                            disabled={isLoading}
+                            className="w-full bg-slate-700 text-white font-bold py-3 px-6 rounded-lg hover:bg-slate-800 disabled:bg-slate-400 transition-colors flex items-center justify-center"
+                        >
+                            <i className="fas fa-camera mr-3"></i> Użyj aparatu
+                        </button>
+                    </div>
+                )
+            ) : (
               <div className="grid md:grid-cols-2 gap-8 items-start">
                 <div className="flex flex-col items-center">
                     <div className="w-full aspect-square rounded-xl overflow-hidden shadow-md border-4 border-slate-100 mb-4">
@@ -175,9 +205,9 @@ const App: React.FC = () => {
                                 <button
                                     onClick={handleGenerateRecipeClick}
                                     disabled={isGeneratingRecipe}
-                                    className="bg-amber-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-amber-600 disabled:bg-amber-300 transition-colors flex items-center justify-center w-full"
+                                    className="bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 disabled:bg-green-300 transition-colors flex items-center justify-center w-full"
                                 >
-                                    {isGeneratingRecipe ? <Spinner /> : <><i className="fas fa-utensils mr-2"></i> Wygeneruj przepis</>}
+                                    {isGeneratingRecipe ? <Spinner /> : <><i className="fas fa-search mr-2"></i> Szukaj na Cookido</>}
                                 </button>
                             </div>
                         )}
@@ -186,8 +216,8 @@ const App: React.FC = () => {
                   {isGeneratingRecipe && (
                      <div className="text-center p-8 bg-slate-100 rounded-lg">
                       <Spinner color="text-indigo-600" />
-                      <p className="mt-4 font-semibold text-slate-600">Tworzenie przepisu...</p>
-                      <p className="text-sm text-slate-500">Nasz szef kuchni AI już działa!</p>
+                      <p className="mt-4 font-semibold text-slate-600">Szukanie przepisu na Cookido...</p>
+                      <p className="text-sm text-slate-500">To może zająć chwilę.</p>
                     </div>
                   )}
                   {recipe && <RecipeDisplay recipe={recipe} />}

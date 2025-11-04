@@ -83,18 +83,22 @@ export const generateRecipeFromImage = async (
   ingredients: FoodItem[]
 ): Promise<string> => {
     const ingredientList = ingredients.map(item => item.name).join(', ');
-    const prompt = `Jesteś kreatywnym i doświadczonym szefem kuchni. Twoim zadaniem jest stworzenie prostego i smacznego przepisu na podstawie zdjęcia oraz listy zidentyfikowanych składników.
+    const prompt = `Jesteś asystentem przepisów platformy Cookidoo (oficjalna platforma z przepisami na Thermomix). Twoim zadaniem jest znalezienie w bazie danych Cookidoo prostego i smacznego przepisu na podstawie zdjęcia oraz listy zidentyfikowanych składników.
 
 Zidentyfikowane składniki: ${ingredientList}.
 
-Proszę, stwórz przepis, który będzie zawierał:
+Proszę, znajdź przepis, który będzie zawierał:
 1.  **Tytuł:** Chwytliwa i apetyczna nazwa dania.
-2.  **Opis:** Krótki, zachęcający opis (2-3 zdania).
-3.  **Składniki:** Wypunktowana lista. Możesz dodać kilka podstawowych składników, których nie widać na zdjęciu, ale są niezbędne (np. oliwa z oliwek, sól, pieprz, woda).
-4.  **Instrukcje:** Ponumerowana lista kroków do wykonania.
+2.  **ID Przepisu Cookido:** Fikcyjny identyfikator w formacie 'CK-XXXXX'.
+3.  **Czas przygotowania:** Szacowany czas, np. "25 min".
+4.  **Opis:** Krótki, zachęcający opis (2-3 zdania).
+5.  **Składniki:** Wypunktowana lista. Możesz dodać kilka podstawowych składników, których nie widać na zdjęciu, ale są niezbędne (np. oliwa z oliwek, sól, pieprz, woda).
+6.  **Instrukcje:** Ponumerowana lista kroków do wykonania, jeśli to możliwe, dostosowana do urządzenia Thermomix.
 
 Odpowiedź sformatuj w czytelny sposób, używając poniższych etykiet (w języku polskim, pogrubione):
 **Tytuł:** ...
+**ID Przepisu Cookido:** ...
+**Czas przygotowania:** ...
 **Opis:** ...
 **Składniki:** ...
 **Instrukcje:** ...
@@ -120,6 +124,6 @@ Odpowiedź sformatuj w czytelny sposób, używając poniższych etykiet (w języ
 
     } catch (error) {
         console.error("Error calling Gemini API for recipe generation:", error);
-        throw new Error("Nie udało się wygenerować przepisu. Model AI zwrócił błąd.");
+        throw new Error("Nie udało się wyszukać przepisu. Model AI zwrócił błąd.");
     }
 };

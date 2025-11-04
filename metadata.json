@@ -1,5 +1,7 @@
 {
   "name": "Kalkulator Kalorii AI",
   "description": "Aplikacja internetowa, która wykorzystuje Gemini API do analizowania zdjęć jedzenia i szacowania liczby kalorii. Użytkownicy mogą przesłać zdjęcie posiłku, a aplikacja zidentyfikuje produkty spożywcze i przedstawi szczegółowe zestawienie kalorii wraz z sumą całkowitą.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera"
+  ]
 }
