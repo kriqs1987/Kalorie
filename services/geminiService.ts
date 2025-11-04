@@ -44,7 +44,7 @@ const schema = {
 export const analyzeImageForCalories = async (
   base64ImageData: string,
   mimeType: string
-): Promise<AnalysisResult> => {
+): Promise<Omit<AnalysisResult, 'items'> & { items: Omit<FoodItem, 'id'>[] }> => {
   const prompt = `Jesteś ekspertem w dziedzinie żywienia. Proszę, zidentyfikuj jedzenie na tym zdjęciu. Podaj szacunkową liczbę kalorii dla każdego produktu oraz łączną sumę kalorii. Jeśli na zdjęciu nie ma jedzenia, zwróć pustą listę i 0 kalorii. Odpowiadaj wyłącznie w formacie JSON, zgodnie z dostarczonym schematem.`;
 
   try {
@@ -69,7 +69,7 @@ export const analyzeImageForCalories = async (
 
     const jsonString = response.text;
     const parsedResult = JSON.parse(jsonString);
-    return parsedResult as AnalysisResult;
+    return parsedResult;
 
   } catch (error) {
     console.error("Error calling Gemini API for calorie analysis:", error);
